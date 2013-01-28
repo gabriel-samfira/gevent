@@ -56,3 +56,15 @@ def __dependencies_for_freezing():
     import signal
 
 del __dependencies_for_freezing
+
+import logging
+try:
+    from logging import NullHandler
+except ImportError:
+    class NullHandler(logging.Handler):
+        def emit(self, record):
+            pass
+ch = logging.StreamHandler()
+logging.getLogger(__name__).addHandler(NullHandler())
+logging.getLogger(__name__).addHandler(ch)
+

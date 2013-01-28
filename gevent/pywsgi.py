@@ -13,7 +13,7 @@ from gevent import socket
 import gevent
 from gevent.server import StreamServer
 from gevent.hub import GreenletExit
-
+from util import Log as _log
 
 __all__ = ['WSGIHandler', 'WSGIServer']
 
@@ -265,19 +265,21 @@ class WSGIHandler(object):
         return True
 
     def log_error(self, msg, *args):
+        log = self.server.log
         try:
             message = msg % args
-        except Exception:
-            traceback.print_exc()
+        except Exception as err:
+            log.exception(err)
             message = '%r %r' % (msg, args)
         try:
             message = '%s: %s' % (self.socket, message)
         except Exception:
             pass
+
         try:
-            sys.stderr.write(message + '\n')
-        except Exception:
-            traceback.print_exc()
+            log.log(message)
+        except Exception as err:
+            log.exception(err)
 
     def read_requestline(self):
         return self.rfile.readline(MAX_REQUEST_LINE)
@@ -457,7 +459,7 @@ class WSGIHandler(object):
     def log_request(self):
         log = self.server.log
         if log:
-            log.write(self.format_request() + '\n')
+            log.log(self.format_request())
 
     def format_request(self):
         now = datetime.now().replace(microsecond=0)
@@ -603,10 +605,7 @@ class WSGIServer(StreamServer):
             self.application = application
         if handler_class is not None:
             self.handler_class = handler_class
-        if log == 'default':
-            self.log = sys.stderr
-        else:
-            self.log = log
+        self.log = _log(log)
         self.set_environ(environ)
         self.set_max_accept()
 

@@ -2,7 +2,47 @@
 __all__ = ['wrap_errors']
 
 import sys
+import traceback
 
+import logging
+_log = logging.getLogger(__name__)
+ch = logging.StreamHandler()
+_log.addHandler(ch)
+
+class Log(object):
+
+    def __init__(self, log='default'):
+        if log == 'default':
+            self._log = _log
+        else:
+            self._log = log
+
+    def __getattr__(self, name):
+        if len(logging.root.handlers) > 0:
+            if name == 'log':
+                if isinstance(self._log, logging.Logger):
+                    return self.log_logging
+                else:
+                    return self.log_stderr
+        else:
+            return self.log_stderr
+        raise AttributeError()
+
+    def log_logging(self, msg):
+        if isinstance(self._log, logging.Logger) is False:
+            self.log_stderr(msg)
+            return
+        _log.warn(msg)
+        
+    def log_stderr(self, msg):
+        msg = "%s\n" % msg
+        sys.stderr.write(msg)
+
+    def exception(self, msg):
+        if isinstance(self._log, logging.getLogger) is False:
+            traceback.print_exc()
+            return
+        _log.exception(msg)
 
 class wrap_errors(object):
     """Helper to make function return an exception, rather than raise it.
