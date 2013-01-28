@@ -66,5 +66,3 @@ except ImportError:
             pass
 ch = logging.StreamHandler()
 logging.getLogger(__name__).addHandler(NullHandler())
-logging.getLogger(__name__).addHandler(ch)
-
